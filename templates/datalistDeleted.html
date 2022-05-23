@@ -1,0 +1,6 @@
+<h2><a href='/'>Home</a></h2>
+<hr><br>
+<h2>List of Deleted Items:</h2><hr>
+{% for item in items %}
+<h3><a href='{{item.link}}'>{{item}}</a></h3><hr>
+{% endfor %}

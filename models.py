@@ -14,16 +14,18 @@ class itemModel(db.Model):
     location = db.Column(db.String(), primary_key = True)
     deleted = db.Column(db.Boolean(), primary_key = True)
     deletionComment = db.Column(db.String(), primary_key = True)
-    
+    link = db.Column(db.String(), primary_key = True)
  
     def __init__(self, name, category, location, quantity):
-        self.itemID = 1
+        self.itemID = len(itemModel.query.all())
         self.name = name
         self.dateAdded = date.today().strftime("%m/%d/%y")
         self.category = category
         self.location = location
         self.deleted = False
         self.deletionComment = ''
- 
+        self.quantity = quantity
+        self.link = '/' + str(self.itemID)
     def __repr__(self):
         return f"{self.name}:{self.itemID}"
+

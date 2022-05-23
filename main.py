@@ -16,9 +16,9 @@ def create_table():
 @app.errorhandler(404)
 def page_not_found(e):
     # note that we set the 404 status explicitly
-    return 'dumb error', 404
+    return 'Unlucky, no items are here when you walk this PATH', 404
 
-@app.route('/data/create/' , methods = ['GET','POST'])
+@app.route('/create/' , methods = ['GET','POST'])
 def create():
     if request.method == 'GET':
         return render_template('createpage.html')
@@ -31,54 +31,71 @@ def create():
         item = itemModel(name = name, category = category, location = location, quantity = quantity)
         db.session.add(item)
         db.session.commit()
-        return redirect('/data')
+        return redirect('/')
  
  
-@app.route('/data/')
+@app.route('/')
 def RetrieveList():
-    item = itemModel.query.all()
-    return render_template('datalist.html',items = item)
+    items = itemModel.query.filter_by(deleted = False).all()
+    return render_template('datalist.html',items = items)
  
- 
-@app.route('/data/<int:id>/')
+@app.route('/deletedItems/')
+def RetrieveDeletedList():
+    items = itemModel.query.filter_by(deleted = True).all()
+    return render_template('datalistDeleted.html',items = items)
+	
+@app.route('/<int:id>/')
 def RetrieveItem(id):
     item = itemModel.query.filter_by(itemID = id).first()
     if item:
-        return render_template('data.html', item = item)
-    return f"Item with id ={id} Doesn\'t exist"
+        if item.deleted == False:
+	        return render_template('data.html', item = item)
+        else:
+            return render_template('deletedData.html', item = item)
+    return f"Item with id = {id} Doesn\'t exist"
  
  
-@app.route('/data/<int:id>/update/',methods = ['GET','POST'])
+@app.route('/<int:id>/update/',methods = ['GET','POST'])
 def update(id):
     item = itemModel.query.filter_by(itemID=id).first()
     if request.method == 'POST':
         if item:
-            db.session.delete(item)
             db.session.commit()
-            name = request.form['name']
-            category = request.form['category']
-            location = request.form['location']
-            quantity = request.form['quantity']
-            item = itemModel(name = name, category = category, location = location, quantity = quantity)
-            db.session.add(item)
+            item.name = request.form['name']
+            item.category = request.form['category']
+            item.location = request.form['location']
+            item.quantity = request.form['quantity']
             db.session.commit()
-            return redirect(f'/data/{id}')
-        return f"Item with id = {id} Doesn't exist"
+            return redirect(f'/{id}')
+        return f"Item with id = {id} Doesn\'t exist"
  
     return render_template('update.html', item = item)
  
  
-@app.route('/data/<int:id>/delete/', methods=['GET','POST'])
+@app.route('/<int:id>/delete/', methods=['GET','POST'])
 def delete(id):
     item = itemModel.query.filter_by(itemID=id).first()
     if request.method == 'POST':
         if item:
-            db.session.delete(item)
+            item.deleted = True
+            item.deletionComment = request.form['comment']
             db.session.commit()
-            return redirect('/data')
+            return redirect('/')
 
  
     return render_template('delete.html')
+
+@app.route('/<int:id>/undelete/', methods=['GET','POST'])
+def undelete(id):
+    item = itemModel.query.filter_by(itemID=id).first()
+    if request.method == 'POST':
+        if item:
+            item.deleted = False
+            db.session.commit()
+            return redirect('/')
+
+ 
+    return render_template('undelete.html')
  
 
 web.run(app)
